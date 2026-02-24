@@ -33,8 +33,6 @@ export class ProductsService {
       const results = await queryBuilder.getMany();
       return await Promise.all(results.map(async product => {
         return {
-          entryDate: new Date(product.entryDate),
-          lastUpdateDate: new Date(product.lastUpdateDate),
           ...product, 
           analogs: (await this.productRepository.createQueryBuilder('product')
           .select('product.oem')
