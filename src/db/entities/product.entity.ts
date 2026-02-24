@@ -1,4 +1,4 @@
-import { Entity, Column, PrimaryColumn } from 'typeorm';
+import { Entity, Column, PrimaryColumn, UpdateDateColumn } from 'typeorm';
 
 @Entity({name: "products"})
 export class Product {
@@ -26,7 +26,7 @@ export class Product {
   @Column()
   entryDate: Date;
   
-  @Column()
+  @UpdateDateColumn()
   lastUpdateDate: Date;
 
   @Column({ array: true, type: "varchar" })
