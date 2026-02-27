@@ -31,4 +31,7 @@ export class Product {
 
   @Column({ array: true, type: "varchar" })
   photos: string[];
+
+  @Column()
+  cellNumber: number;
 }

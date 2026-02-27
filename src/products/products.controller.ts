@@ -11,6 +11,11 @@ export class ProductsController {
     return this.productsService.getProducts(query, sort ? { field: sort, order } : undefined);
   }
 
+  @Get("/:oem/:article")
+  getProductByOemAndArticle(@Param("oem") oem: string, @Param("article") article: string) {
+    return this.productsService.getProductByOemAndArticle(oem, article);
+  }
+
   @Post("/create")
   createProduct(@Body() createProductData: CreateProductDto) {
     return this.productsService.createProduct(createProductData);

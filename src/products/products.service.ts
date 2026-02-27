@@ -31,13 +31,17 @@ export class ProductsService {
       }
 
       const results = await queryBuilder.getMany();
+      
       return await Promise.all(results.map(async product => {
+        const analogs: Product[] = (await this.productRepository.createQueryBuilder('product')
+          .select('product.oem, product.article')
+          .where('product.article = :article AND product.oem != :oem', { article: product.article, oem: product.oem })
+          .execute())
+
         return {
           ...product, 
-          analogs: (await this.productRepository.createQueryBuilder('product')
-          .select('product.oem')
-          .where('product.article = :article AND product.oem != :oem', { article: product.article, oem: product.oem })
-          .execute()).map((row: { product_oem: string }) => row.product_oem)
+          analogs: analogs.filter(row => row.oem !== row.article).map(row => row.oem),
+          original: analogs.find((row) => row.oem === row.article)?.oem
         }
       }));
     } catch (e) {
@@ -50,7 +54,7 @@ export class ProductsService {
   try {    
     console.log(createProductDto)
     const product = this.productRepository.create(createProductDto);
-    return await this.productRepository.insert(product);
+    return await this.productRepository.save(product);
   } catch (e) {
     this.logger.error('Error creating product:', e);
     throw new BadRequestException(e);
@@ -72,6 +76,23 @@ export class ProductsService {
       return await this.productRepository.update({ oem, article }, updateData);
     } catch (e) {
       this.logger.error('Error updating product:', e);
+      throw new BadRequestException(e);
+    }
+  }
+
+  async getProductByOemAndArticle(oem: string, article: string) {
+    try {
+      const product = await this.productRepository.findOne({ where: { oem, article } });
+      if (!product) {
+        throw new BadRequestException('Product not found');
+      }
+      const analogs = (await this.productRepository.createQueryBuilder('product')
+        .select('product.oem')
+        .where('product.article = :article AND product.oem != :oem', { article, oem })
+        .execute()).map((row: { product_oem: string }) => row.product_oem);
+      return { ...product, analogs };
+    } catch (e) {
+      this.logger.error('Error fetching product by OEM and article:', e);
       throw new BadRequestException(e);
     }
   }
