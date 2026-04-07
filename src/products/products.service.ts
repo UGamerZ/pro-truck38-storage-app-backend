@@ -4,6 +4,8 @@ import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { SortOptions } from '../typings/query';
 import { CreateProductDto, RemoveDataDto } from '../typings/requests';
+import { FileService } from '../files/file.service';
+import { ProductAudit } from 'src/db/entities/product-audit.entity';
 
 @Injectable()
 export class ProductsService {
@@ -12,6 +14,9 @@ export class ProductsService {
   constructor(
     @InjectRepository(Product)
     private readonly productRepository: Repository<Product>,
+    @InjectRepository(ProductAudit)
+    private readonly logsRepository: Repository<ProductAudit>,
+    private readonly fileService: FileService
   ) {}
 
   async getProducts(query?: string, sort?: SortOptions) {
@@ -22,11 +27,11 @@ export class ProductsService {
       }
       if (query) {
         queryBuilder = queryBuilder.where(`
-          product.oem ILIKE :query 
-          OR product.description ILIKE :query
-          OR product.manufacturer ILIKE :query
-          OR product.supplier ILIKE :query
-          OR product.article ILIKE :query
+          product.oem ILIKE :query COLLATE "ru_RU"
+          OR product.description ILIKE :query COLLATE "ru_RU"
+          OR product.manufacturer ILIKE :query COLLATE "ru_RU"
+          OR product.supplier ILIKE :query COLLATE "ru_RU"
+          OR product.article ILIKE :query COLLATE "ru_RU"
         `, { query: `%${query}%` });
       }
 
@@ -50,9 +55,10 @@ export class ProductsService {
     }
  }
 
- async createProduct(createProductDto: CreateProductDto) {
+ async createProduct(createProductDto: CreateProductDto, files: Express.Multer.File[]) {
   try {    
-    const product = this.productRepository.create(createProductDto);
+    const photos = await this.fileService.uploadToGoogleDrive(files);
+    const product = this.productRepository.create({ ...createProductDto, photos });
     return await this.productRepository.save(product);
   } catch (e) {
     this.logger.error('Error creating product:', e);
@@ -62,6 +68,9 @@ export class ProductsService {
 
  async removeProduct({ oem, article }: RemoveDataDto) {
   try {
+    const currPhotos = (await this.productRepository.findOne({ where: { oem, article }, select: { photos: true } })).photos;
+    if (currPhotos && currPhotos.length) 
+      currPhotos.forEach(photo => this.fileService.deleteFile(photo.split("/image/")[1]));
     return await this.productRepository.delete({ oem, article });
   } catch (e) {
     this.logger.error('Error removing product:', e);
@@ -69,10 +78,17 @@ export class ProductsService {
   }
  }
 
-  async updateProduct(updateProductData: CreateProductDto) {
+  async updateProduct(updateProductData: CreateProductDto, files: Express.Multer.File[]) {
     try {
+      let photos = await this.fileService.uploadToGoogleDrive(files);
       const { oem, article, ...updateData } = updateProductData;
-      return await this.productRepository.update({ oem, article }, updateData);
+      if (!photos.length) photos = undefined;
+      else {
+        const currPhotos = (await this.productRepository.findOne({ where: { oem, article }, select: { photos: true } })).photos;
+        if (currPhotos && currPhotos.length) 
+          currPhotos.forEach(photo => this.fileService.deleteFile(photo.split("/image/")[1]));
+      }
+      return await this.productRepository.update({ oem, article }, { ...updateData, photos });
     } catch (e) {
       this.logger.error('Error updating product:', e);
       throw new BadRequestException(e);
@@ -92,6 +108,35 @@ export class ProductsService {
       return { ...product, analogs };
     } catch (e) {
       this.logger.error('Error fetching product by OEM and article:', e);
+      throw new BadRequestException(e);
+    }
+  }
+
+  async getProductsLogs(query?: string, sort?: SortOptions) {
+    try {
+      let queryBuilder = this.logsRepository.createQueryBuilder('log').orderBy("log.id", "DESC");
+      if (sort) {
+        queryBuilder = queryBuilder.orderBy(`log.${sort.field}`, sort.order);
+      }
+      if (query) {
+        queryBuilder = queryBuilder.where(`
+          log.oem ILIKE :query COLLATE "ru_RU"
+          OR log.article ILIKE :query COLLATE "ru_RU"
+        `, { query: `%${query}%` });
+      }
+
+      return queryBuilder.getMany();
+    } catch (e) {
+      this.logger.error('Error fetching products', e);
+      throw new BadRequestException('Error fetching products', e);
+    }
+  }
+
+  async getProductLogsByOemAndArticle(oem: string, article: string) {
+    try {
+      return await this.logsRepository.find({ where: { oem, article } });
+    } catch (e) {
+      this.logger.error('Error fetching logs by OEM and article:', e);
       throw new BadRequestException(e);
     }
   }

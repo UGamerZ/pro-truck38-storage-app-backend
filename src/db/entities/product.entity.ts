@@ -34,4 +34,7 @@ export class Product {
 
   @Column()
   cellNumber: number;
+
+  @Column({ nullable: true })
+  qrCode?: string;
 }

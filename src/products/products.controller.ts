@@ -1,6 +1,7 @@
-import { Body, Controller, Delete, Get, HttpCode, Param, Post, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, Param, Post, Query, UploadedFiles, UseInterceptors } from '@nestjs/common';
 import { ProductsService } from './products.service';
 import { CreateProductDto, RemoveDataDto } from '../typings/requests';
+import { FilesInterceptor } from '@nestjs/platform-express';
 
 @Controller("/products")
 export class ProductsController {
@@ -17,13 +18,25 @@ export class ProductsController {
   }
 
   @Post("/create")
-  createProduct(@Body() createProductData: CreateProductDto) {
-    return this.productsService.createProduct(createProductData);
+  @UseInterceptors(FilesInterceptor('photos'))
+  createProduct(@UploadedFiles() photos: Express.Multer.File[], @Body() createProductData: CreateProductDto) {
+    return this.productsService.createProduct(createProductData, photos);
   }
 
   @Post("/update")
-  updateProduct(@Body() updateProductData: CreateProductDto) {
-    return this.productsService.updateProduct(updateProductData);
+  @UseInterceptors(FilesInterceptor('photos'))
+  updateProduct(@UploadedFiles() photos: Express.Multer.File[], @Body() updateProductData: CreateProductDto) {
+    return this.productsService.updateProduct(updateProductData, photos);
+  }
+
+  @Get("/logs")
+  getProductsLogs(@Query("query") query: string, @Query("sortField") sort: string, @Query("sortOrder") order: 'ASC' | 'DESC') {
+    return this.productsService.getProductsLogs(query, sort ? { field: sort, order } : undefined);
+  }
+
+  @Get("logs/:oem/:article")
+  getProductLogsByOemAndArticle(@Param("oem") oem: string, @Param("article") article: string) {
+    return this.productsService.getProductLogsByOemAndArticle(oem, article);
   }
 
   @Delete("/remove")

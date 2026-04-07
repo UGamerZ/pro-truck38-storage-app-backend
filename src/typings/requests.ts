@@ -7,7 +7,8 @@ export class CreateProductDto {
     quantity: number;
     entryPrice: number;
     entryDate: Date;
-    photos: string[];
+    photos?: string[];
+    qr?: string;
 }
 
 export class RemoveDataDto {
