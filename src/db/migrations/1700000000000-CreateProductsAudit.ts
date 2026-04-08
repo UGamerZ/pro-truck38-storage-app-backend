@@ -4,6 +4,24 @@ export class CreateProductsAudit1700000000000 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     // Создаём таблицу аудита
     await queryRunner.query(`
+      CREATE TABLE products(
+        oem varchar NOT NULL,
+        article varchar NOT NULL,
+        manufacturer varchar NOT NULL,
+        description varchar NOT NULL,
+        supplier varchar NOT NULL,
+        quantity integer NOT NULL,
+        "entryPrice" integer NOT NULL,
+        "entryDate" timestamp without time zone NOT NULL,
+        "lastUpdateDate" timestamp without time zone NOT NULL DEFAULT now(),
+        photos character varying[] NOT NULL,
+        "cellNumber" integer NOT NULL,
+        "qrCode" varchar,
+        PRIMARY KEY(oem,article)
+    );
+    `)
+    
+    await queryRunner.query(`
       CREATE TABLE IF NOT EXISTS products_audit (
         id          SERIAL PRIMARY KEY,
         oem VARCHAR NOT NULL,
