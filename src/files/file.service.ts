@@ -65,7 +65,7 @@ export class FileService {
     });
 
     // Возвращаем прямую ссылку на изображение
-    return `http://${CONFIG.LOCAL_IP}:3001/files/image/${fileId}`;
+    return `${CONFIG.LOCAL_IP}/files/image/${fileId}`;
   }
 
   async streamFile(fileId: string, res: Response): Promise<void> {

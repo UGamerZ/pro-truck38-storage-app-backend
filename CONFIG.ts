@@ -4,5 +4,5 @@ export const CONFIG = {
     GOOGLE_REDIRECT_URI: "http://localhost:3000",
     GOOGLE_REFRESH_TOKEN: "1//03lCj5YVBDAejCgYIARAAGAMSNwF-L9IrZSuoLiIo15ZrNiOCClVaPPsV7GW9ZJkURP7pqv66bLuZWohAofz-esuZe_ACxXB01fs",
     GOOGLE_DRIVE_FOLDER_ID: "12nLVASiMaz7iBHgsHSz52mk3BYSkjQEJ",
-    LOCAL_IP: "localhost"
+    LOCAL_IP: "https://protruck38storagebackend.onrender.com"
 }
