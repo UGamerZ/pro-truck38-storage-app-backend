@@ -14,4 +14,5 @@ export const dbConfig: TypeOrmModuleOptions = {
     autoLoadEntities: true,
     migrations: [CreateProductsAudit1700000000000],
     migrationsRun: true,
+    ssl: true,
 };
