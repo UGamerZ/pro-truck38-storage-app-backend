@@ -140,4 +140,13 @@ export class ProductsService {
       throw new BadRequestException(e);
     }
   }
+
+  async removeProductLogs({ oem, article }: RemoveDataDto) {
+    try {
+      return await this.logsRepository.delete({ oem, article });
+    } catch (e) {
+      this.logger.error('Error removing product logs:', e);
+      throw new BadRequestException(e);
+    }
+  }
 }
