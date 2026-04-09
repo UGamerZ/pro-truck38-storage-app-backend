@@ -141,9 +141,10 @@ export class ProductsService {
     }
   }
 
-  async removeProductLogs({ oem, article }: RemoveDataDto) {
+  async removeProductLogs(id: string) {
     try {
-      return await this.logsRepository.delete({ oem, article });
+      const numId = Number(id);
+      return await this.logsRepository.delete({ id: numId });
     } catch (e) {
       this.logger.error('Error removing product logs:', e);
       throw new BadRequestException(e);

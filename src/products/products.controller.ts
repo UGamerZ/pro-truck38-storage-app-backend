@@ -44,8 +44,8 @@ export class ProductsController {
     return this.productsService.removeProduct(removeData)
   }
 
-  @Delete("/logs/remove")
-  removeProductLogs(@Body() removeData: RemoveDataDto){
-    return this.productsService.removeProductLogs(removeData)
+  @Delete("/logs/:id/remove")
+  removeProductLogs(@Param("id") id: string){
+    return this.productsService.removeProductLogs(id)
   }
 }
